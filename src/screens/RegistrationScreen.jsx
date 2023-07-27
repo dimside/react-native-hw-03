@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -6,7 +6,9 @@ import {
   Image,
   Text,
   TextInput,
+  Keyboard,
   KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import AddBtn from "../../assets/images/addBtn.png";
 import DelBtn from "../../assets/images/delBtn.png";
@@ -18,7 +20,11 @@ export const RegistrationScreen = () => {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
   const [isShowPass, setIsShowPass] = useState(true);
-  const [registrData, setRegistrData] = useState(null);
+  const [isFocus, setIsFocus] = useState(false);
+
+  const loginInput = useRef();
+  const emailInput = useRef();
+  const passInput = useRef();
 
   const handleAddBtnPress = () => {
     setUserImage((current) => !current);
@@ -27,17 +33,44 @@ export const RegistrationScreen = () => {
     setIsShowPass((current) => !current);
   };
   const handleSubmit = () => {
-    setRegistrData({ login, email, password });
+    const credentials = { login, email, password };
+    console.log(credentials);
     setLogin(null);
     setEmail(null);
     setPassword(null);
-    console.log(registrData);
   };
+
+  const handleOnFocus = (type, inputName) => {
+    switch (type) {
+      case "focus":
+        return () => {
+          setIsFocus(true);
+          emailInput.current = inputName === "emailInput";
+          passInput.current = inputName === "passInput";
+          loginInput.current = inputName === "loginInput";
+        };
+
+      case "blur":
+        return () => {
+          setIsFocus(false);
+          inputName.current = 0;
+        };
+
+      default:
+        return;
+    }
+  };
+  const inputStyle = (inputName) => {
+    return [
+      styles.input,
+      {
+        borderColor: inputName.current && isFocus ? "#FF6C00" : "#E8E8E8",
+      },
+    ];
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset="-70"
-    >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.registrationContainer}>
         <View style={styles.userImgCont}>
           {userImage && <Image style={styles.userImg} source={UserImg} />}
@@ -49,39 +82,52 @@ export const RegistrationScreen = () => {
           </Pressable>
         </View>
         <Text style={styles.title}>Реєстрація</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Логін"
-          placeholderTextColor="#BDBDBD"
-          onChangeText={setLogin}
-          value={login}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Адреса електронної пошти"
-          inputMode="email"
-          placeholderTextColor="#BDBDBD"
-          onChangeText={setEmail}
-          value={email}
-        />
-        <View style={styles.passwordInput}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <TextInput
-            style={[styles.input, { marginBottom: 43 }]}
-            placeholder="Пароль"
+            style={inputStyle(loginInput)}
+            placeholder="Логін"
             placeholderTextColor="#BDBDBD"
-            onChangeText={setPassword}
-            value={password}
-            secureTextEntry={isShowPass}
+            onChangeText={setLogin}
+            value={login}
+            ref={loginInput}
+            onFocus={handleOnFocus("focus", "loginInput")}
+            onBlur={handleOnFocus("blur", "loginInput")}
           />
-          <Pressable style={styles.showPassBtn} onPress={handleShowPass}>
-            <Text style={styles.showPassText}>
-              {isShowPass ? "Показати" : "Сховати"}
-            </Text>
+          <TextInput
+            style={inputStyle(emailInput)}
+            placeholder="Адреса електронної пошти"
+            inputMode="email"
+            placeholderTextColor="#BDBDBD"
+            onChangeText={setEmail}
+            value={email}
+            ref={emailInput}
+            onFocus={handleOnFocus("focus", "emailInput")}
+            onBlur={handleOnFocus("blur", "emailInput")}
+          />
+          <View style={styles.passwordInput}>
+            <TextInput
+              style={[...inputStyle(passInput), { marginBottom: 43 }]}
+              placeholder="Пароль"
+              placeholderTextColor="#BDBDBD"
+              onChangeText={setPassword}
+              value={password}
+              secureTextEntry={isShowPass}
+              ref={passInput}
+              onFocus={handleOnFocus("focus", "passInput")}
+              onBlur={handleOnFocus("blur", "passInput")}
+            />
+            <Pressable style={styles.showPassBtn} onPress={handleShowPass}>
+              <Text style={styles.showPassText}>
+                {isShowPass ? "Показати" : "Сховати"}
+              </Text>
+            </Pressable>
+          </View>
+          <Pressable style={styles.registerBtn} onPress={handleSubmit}>
+            <Text style={styles.registerText}>Зареєстуватися</Text>
           </Pressable>
-        </View>
-        <Pressable style={styles.registerBtn} onPress={handleSubmit}>
-          <Text style={styles.registerText}>Зареєстуватися</Text>
-        </Pressable>
+        </KeyboardAvoidingView>
         <View style={styles.questionCont}>
           <Text style={styles.questionText}>Вже є акаунт? </Text>
           <Pressable>
@@ -89,7 +135,7 @@ export const RegistrationScreen = () => {
           </Pressable>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -141,7 +187,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     padding: 16,
-    borderColor: "#E8E8E8",
     borderWidth: 1,
   },
   passwordInput: {

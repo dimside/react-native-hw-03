@@ -1,72 +1,102 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   View,
   StyleSheet,
   Pressable,
-  Image,
   Text,
   TextInput,
   KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
-import AddBtn from "../../assets/images/addBtn.png";
-import DelBtn from "../../assets/images/delBtn.png";
-import UserImg from "../../assets/images/user.jpg";
 
 export const LoginScreen = () => {
-  const [userImage, setUserImage] = useState(false);
-  const [login, setLogin] = useState(null);
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
+  const [isFocus, setIsFocus] = useState(false);
   const [isShowPass, setIsShowPass] = useState(true);
-  const [registrData, setRegistrData] = useState(null);
 
-  const handleAddBtnPress = () => {
-    setUserImage((current) => !current);
-  };
+  const emailInput = useRef();
+  const passInput = useRef();
+
   const handleShowPass = () => {
     setIsShowPass((current) => !current);
   };
   const handleSubmit = () => {
-    setRegistrData({ login, email, password });
-    setLogin(null);
+    const credentials = { email, password };
+    console.log(credentials);
     setEmail(null);
     setPassword(null);
-    console.log(registrData);
   };
+
+  const handleOnFocus = (type, inputName) => {
+    switch (type) {
+      case "focus":
+        return () => {
+          setIsFocus(true);
+          emailInput.current = inputName === "emailInput";
+          passInput.current = inputName === "passInput";
+        };
+
+      case "blur":
+        return () => {
+          setIsFocus(false);
+          inputName.current = 0;
+        };
+
+      default:
+        return;
+    }
+  };
+  const inputStyle = (inputName) => {
+    return [
+      styles.input,
+      {
+        borderColor: inputName.current && isFocus ? "#FF6C00" : "#E8E8E8",
+      },
+    ];
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset="-10"
-    >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.loginContainer}>
         <Text style={styles.title}>Увійти</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Адреса електронної пошти"
-          inputMode="email"
-          placeholderTextColor="#BDBDBD"
-          onChangeText={setEmail}
-          value={email}
-        />
-        <View style={styles.passwordInput}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <TextInput
-            style={[styles.input, { marginBottom: 43 }]}
-            placeholder="Пароль"
+            ref={emailInput}
+            style={inputStyle(emailInput)}
+            placeholder="Адреса електронної пошти"
+            inputMode="email"
             placeholderTextColor="#BDBDBD"
-            onChangeText={setPassword}
-            value={password}
-            secureTextEntry={isShowPass}
+            onChangeText={setEmail}
+            value={email}
+            onFocus={handleOnFocus("focus", "emailInput")}
+            onBlur={handleOnFocus("blur", "emailInput")}
           />
-          <Pressable style={styles.showPassBtn} onPress={handleShowPass}>
-            <Text style={styles.showPassText}>
-              {isShowPass ? "Показати" : "Сховати"}
-            </Text>
+          <View style={styles.passwordInput}>
+            <TextInput
+              ref={passInput}
+              style={[...inputStyle(passInput), { marginBottom: 43 }]}
+              placeholder="Пароль"
+              placeholderTextColor="#BDBDBD"
+              onChangeText={setPassword}
+              value={password}
+              secureTextEntry={isShowPass}
+              onFocus={handleOnFocus("focus", "passInput")}
+              onBlur={handleOnFocus("blur", "passInput")}
+            />
+            <Pressable style={styles.showPassBtn} onPress={handleShowPass}>
+              <Text style={styles.showPassText}>
+                {isShowPass ? "Показати" : "Сховати"}
+              </Text>
+            </Pressable>
+          </View>
+          <Pressable style={styles.loginBtn} onPress={handleSubmit}>
+            <Text style={styles.loginText}>Увійти</Text>
           </Pressable>
-        </View>
-        <Pressable style={styles.loginBtn} onPress={handleSubmit}>
-          <Text style={styles.loginText}>Увійти</Text>
-        </Pressable>
+        </KeyboardAvoidingView>
         <View style={styles.questionCont}>
           <Text style={styles.questionText}>Немає акаунту? </Text>
           <Pressable>
@@ -74,7 +104,7 @@ export const LoginScreen = () => {
           </Pressable>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -92,7 +122,6 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     alignItems: "center",
   },
-
   title: {
     fontFamily: "Roboto-Medium",
     fontSize: 30,
